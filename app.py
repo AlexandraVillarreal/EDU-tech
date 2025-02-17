@@ -147,13 +147,14 @@ class CalculoDeRendimiento:
         conn.close()
 
         if estudiante_data:
-            calificaciones = list(estudiante_data)
+            # ✅ Reemplazar None con 0 para evitar errores
+            calificaciones = [c if c is not None else 0 for c in estudiante_data]
             promedio = sum(calificaciones) / len(calificaciones)
 
-            # Clasificación del rendimiento según promedio
+            # ✅ Clasificación del rendimiento según el promedio
             return pd.cut([promedio], bins=[0, 70, 80, 90, 100], labels=['Bajo', 'Básico', 'Alto', 'Superior'])[0]
         else:
-            return "Sin datos de rendimiento"  # 📌 Esto evita errores si no hay datos
+            return "Sin datos de rendimiento"  # 📌 Evitar errores si no hay datos
 
 # 📌 Ruta principal (Muestra la bienvenida)
 @app.route('/')
