@@ -18,13 +18,18 @@
                 {% endfor %}
             </ul>
         {% else %}
-            <p>Aún no has completado la encuesta.</p>
+            <p>Aún no has realizado la encuesta.</p>
         {% endif %}
 
         <div class="botones">
-            <a href="{{ url_for('dashboard') }}"><button>Volver al Inicio</button></a>
+            {% if respuestas %}
+                <a href="{{ url_for('dashboard') }}"><button>Volver al Dashboard</button></a>
+            {% else %}
+                <a href="{{ url_for('encuesta') }}"><button>Resolver Encuesta</button></a>
+            {% endif %}
         </div>
     </div>
 
 </body>
 </html>
+
