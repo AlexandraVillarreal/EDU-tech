@@ -3,15 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <title>Resultado de Estilo de Aprendizaje</title>
-</head>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head> 
 <body>
-    <h2>Resultados de {{ nombre }} {{ apellido }}</h2>
-    
-    <h3>📌 Estilo de aprendizaje predominante: <strong>{{ estilo }}</strong></h3>
 
-    <h3>📊 Rendimiento Académico</h3>
-    <p><strong>Tu rendimiento general es:</strong> {{ rendimiento }}</p>
+    <div id="resultado-container">
+        <h2>Resultados de {{ nombre }} {{ apellido }}</h2>
+        
+        <h3>📌 Estilo de aprendizaje predominante: <strong>{{ estilo }}</strong></h3>
 
-    <a href="{{ url_for('registro') }}">Volver al Inicio</a>
+        <h3>📊 Rendimiento Académico</h3>
+        <p><strong>Tu rendimiento general es:</strong> {{ rendimiento }}</p>
+
+        <div class="botones">
+            <a href="{{ url_for('dashboard') }}"><button>Volver al Dashboard</button></a>
+            <a href="{{ url_for('encuesta') }}"><button>Volver a Realizar la Encuesta</button></a>
+        </div>
+    </div>
+
 </body>
 </html>
+

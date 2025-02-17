@@ -58,6 +58,28 @@ def verificar_base_datos():
 
 verificar_base_datos()
 
+# 📌 Clase para calcular rendimiento
+class CalculoDeRendimiento:
+    @staticmethod
+    def obtener_rendimiento(nombre, apellido):
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT matematicas, historia, fisica, quimica, biologia, ingles, geografia 
+            FROM usuarios WHERE nombre = ? AND apellido = ?
+        """, (nombre, apellido))
+        estudiante_data = cursor.fetchone()
+        conn.close()
+
+        if estudiante_data:
+            calificaciones = list(estudiante_data)
+            promedio = sum(calificaciones) / len(calificaciones)
+
+            # Clasificación del rendimiento según promedio
+            return pd.cut([promedio], bins=[0, 70, 80, 90, 100], labels=['Bajo', 'Básico', 'Alto', 'Superior'])[0]
+        else:
+            return "Sin datos de rendimiento"  # 📌 Esto evita errores si no hay datos
+
 # 📌 Ruta principal (Muestra la bienvenida)
 @app.route('/')
 def home():
@@ -108,7 +130,7 @@ def login():
             session["nombre"] = usuario[1]
             session["apellido"] = usuario[2]
             session["email"] = email  
-            return redirect(url_for("dashboard"))  # ✅ Redirige al Dashboard en vez de la encuesta
+            return redirect(url_for("dashboard"))  
         else:
             return render_template("login.html", error="⚠️ Email o contraseña incorrectos")
 
@@ -120,69 +142,7 @@ def dashboard():
     if "usuario_id" not in session:
         return redirect(url_for("login"))
 
-    nombre = session["nombre"]
-    apellido = session["apellido"]
-    
-    return render_template("dashboard.html", nombre=nombre, apellido=apellido)
-
-@app.route("/ver_progreso")
-def ver_progreso():
-    if "usuario_id" not in session:
-        return redirect(url_for("login"))  # Redirige a login si el usuario no ha iniciado sesión
-
-    usuario_id = session["usuario_id"]
-
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT pregunta, respuesta FROM respuestas WHERE id_usuario = ?", (usuario_id,))
-    respuestas = cursor.fetchall()
-    
-    conn.close()
-
-    return render_template("progreso.html", respuestas=respuestas)
-
-# 📌 Ruta de la encuesta
-@app.route('/encuesta', methods=['GET', 'POST'])
-def encuesta():
-    if "usuario_id" not in session:
-        return redirect(url_for("login"))
-
-    usuario_id = session["usuario_id"]
-
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("SELECT pregunta, respuesta FROM respuestas WHERE id_usuario = ?", (usuario_id,))
-    respuestas_previas = dict(cursor.fetchall())
-
-    conn.close()
-
-    return render_template("encuesta.html", preguntas=preguntas, respuestas_previas=respuestas_previas)
-
-# 📌 Guardar respuestas parciales de la encuesta
-@app.route('/guardar_respuestas', methods=['POST'])
-def guardar_respuestas():
-    if "usuario_id" not in session:
-        return redirect(url_for("login"))
-
-    usuario_id = session["usuario_id"]
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    for i, pregunta in enumerate(preguntas):
-        respuesta = request.form.get(f'pregunta{i}')
-        if respuesta:  
-            cursor.execute("""
-                INSERT INTO respuestas (id_usuario, pregunta, respuesta)
-                VALUES (?, ?, ?)
-                ON CONFLICT(id_usuario, pregunta) 
-                DO UPDATE SET respuesta = excluded.respuesta
-            """, (usuario_id, pregunta["texto"], respuesta))
-
-    conn.commit()
-    conn.close()
-
-    return redirect(url_for("dashboard"))  # ✅ Redirige al Dashboard después de guardar
+    return render_template("dashboard.html", nombre=session["nombre"], apellido=session["apellido"])
 
 # 📌 Ruta de resultados de la encuesta
 @app.route('/resultado', methods=['POST'])
@@ -190,6 +150,7 @@ def resultado():
     if "usuario_id" not in session:
         return redirect(url_for("login"))  
 
+    usuario_id = session["usuario_id"]
     nombre = session["nombre"]
     apellido = session["apellido"]
 
@@ -200,14 +161,28 @@ def resultado():
 
     estilos = {"Activo": 0, "Reflexivo": 0, "Teórico": 0, "Pragmático": 0}
 
-    for i in range(len(preguntas)):  
-        respuesta = respuestas.get(f'pregunta{i}')
-        if respuesta == '+':
-            estilos[preguntas[i]['estilo']] += 1  
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    for i, pregunta in enumerate(preguntas):
+        respuesta = respuestas[f'pregunta{i}']
+        estilos[pregunta["estilo"]] += (1 if respuesta == "+" else 0)
 
-    estilo_predominante = max(estilos, key=estilos.get)
+        cursor.execute("""
+            INSERT INTO respuestas (id_usuario, pregunta, respuesta)
+            VALUES (?, ?, ?)
+            ON CONFLICT(id_usuario, pregunta) 
+            DO UPDATE SET respuesta = excluded.respuesta
+        """, (usuario_id, pregunta["texto"], respuesta))
 
-    return render_template('resultado.html', nombre=nombre, apellido=apellido, estilo=estilo_predominante)
+    conn.commit()
+    conn.close()
+
+    # 📌 Obtener rendimiento académico del usuario
+    rendimiento = CalculoDeRendimiento.obtener_rendimiento(nombre, apellido)
+
+    return render_template('resultado.html', nombre=nombre, apellido=apellido, 
+                           estilo=max(estilos, key=estilos.get), rendimiento=rendimiento)
 
 # 📌 Ruta para cerrar sesión
 @app.route("/logout")
