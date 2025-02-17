@@ -68,8 +68,8 @@ class CalculoDeRendimiento:
 @app.route('/')
 def home():
     if "usuario_id" in session:
-        return redirect(url_for("encuesta"))  
-    return redirect(url_for("bienvenida.html"))
+        return redirect(url_for("bienvenida.html"))  
+    return redirect(url_for("encuesta"))
 
 # 📌 Ruta de registro de estudiante
 @app.route("/registro", methods=["GET", "POST"])
