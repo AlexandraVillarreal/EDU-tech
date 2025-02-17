@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Resultado de Estilo de Aprendizaje</title>
+</head>
+<body>
+    <h2>Resultados de {{ nombre }} {{ apellido }}</h2>
+    
+    <h3>📌 Estilo de aprendizaje predominante: <strong>{{ estilo }}</strong></h3>
+
+    <h3>📊 Rendimiento Académico</h3>
+    <p><strong>Tu rendimiento general es:</strong> {{ rendimiento }}</p>
+
+    <a href="{{ url_for('registro') }}">Volver al Inicio</a>
+</body>
+</html>

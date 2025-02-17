@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encuesta de Estilo de Aprendizaje</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h2>Encuesta de Estilo de Aprendizaje</h2>
+
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('resultado') }}">
+        {% for pregunta in preguntas %}
+            <p>{{ pregunta.texto }}</p>
+            <label><input type="radio" name="pregunta{{ loop.index0 }}" value="+" required> Sí</label>
+            <label><input type="radio" name="pregunta{{ loop.index0 }}" value="-"> No</label>
+            <br><br>
+        {% endfor %}
+        <button type="submit">Enviar Respuestas</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encuesta de Estilo de Aprendizaje</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+</head>
+<body>
+
+    <h2>Registro de Estudiante</h2>
+    <form id="registroForm" method="POST" action="{{ url_for('registro') }}">
+        <label for="nombre">Nombre:</label>
+        <input type="text" id="nombre" name="nombre" required><br><br>
+        
+        <label for="apellido">Apellido:</label>
+        <input type="text" id="apellido" name="apellido" required><br><br>
+
+        <button type="submit">Comenzar Encuesta</button>
+    </form>
+
+    {% if preguntas %}
+    <div id="encuesta">
+        <h2>Encuesta de Estilo de Aprendizaje</h2>
+        <form id="encuestaForm" method="POST" action="{{ url_for('resultado') }}">
+            <input type="hidden" name="nombre" value="{{ nombre }}">
+            <input type="hidden" name="apellido" value="{{ apellido }}">
+            <div id="preguntas">
+                {% for pregunta in preguntas %}
+                    <p>{{ pregunta.texto }}</p>
+                    <label><input type="radio" name="pregunta{{ loop.index0 }}" value="+" required> Sí</label>
+                    <label><input type="radio" name="pregunta{{ loop.index0 }}" value="-"> No</label>
+                    <br><br>
+                {% endfor %}
+            </div>
+            <button type="submit">Enviar Respuestas</button>
+        </form>
+    </div>
+    {% endif %}
+
+</body>
+</html>
