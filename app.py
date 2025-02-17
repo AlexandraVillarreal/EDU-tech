@@ -213,10 +213,13 @@ def ver_progreso():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    cursor.execute("SELECT pregunta, respuesta FROM respuestas WHERE id_usuario = ?", (usuario_id,))
-    respuestas = cursor.fetchall()
+    cursor.execute("SELECT COUNT(*) FROM respuestas WHERE id_usuario = ?", (usuario_id,))
+    total_respuestas = cursor.fetchone()[0]
     
     conn.close()
+
+    if total_respuestas == len(preguntas):  # Si la encuesta está completa, ir al resultado
+        return redirect(url_for("resultado"))
 
     return render_template("progreso.html", respuestas=respuestas)
 
@@ -239,8 +242,14 @@ def guardar_respuestas():
                 DO UPDATE SET respuesta = excluded.respuesta
             """, (usuario_id, pregunta["texto"], respuesta))
 
+    cursor.execute("SELECT COUNT(*) FROM respuestas WHERE id_usuario = ?", (usuario_id,))
+    total_respuestas = cursor.fetchone()[0]
+
     conn.commit()
     conn.close()
+
+    if total_respuestas == len(preguntas):
+        return redirect(url_for("resultado"))
 
     return redirect(url_for("ver_progreso"))  # ✅ Después de guardar, ir al progreso
 
