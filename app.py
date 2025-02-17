@@ -112,6 +112,7 @@ def registro():
 
     return render_template("registro.html")
 
+
 # 📌 Ruta de login
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -135,6 +136,24 @@ def login():
             return render_template("login.html", error="⚠️ Email o contraseña incorrectos")
 
     return render_template("login.html")
+
+@app.route('/encuesta', methods=['GET', 'POST'])
+def encuesta():
+    if "usuario_id" not in session:
+        return redirect(url_for("login"))
+
+    usuario_id = session["usuario_id"]
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # Obtener respuestas previas del usuario
+    cursor.execute("SELECT pregunta, respuesta FROM respuestas WHERE id_usuario = ?", (usuario_id,))
+    respuestas_previas = dict(cursor.fetchall())
+
+    conn.close()
+
+    return render_template("encuesta.html", preguntas=preguntas, respuestas_previas=respuestas_previas)
 
 # 📌 Ruta del Dashboard
 @app.route('/dashboard')
