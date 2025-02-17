@@ -287,9 +287,9 @@ def ver_progreso():
     
     conn.close()
 
-    total_respuestas = len(respuestas)
+    total_respuestas = 80
 
-    if total_respuestas == len(preguntas):  # ✅ Si está completa, ir a resultado
+    if total_respuestas == 80:  # ✅ Si está completa, ir a resultado
         return redirect(url_for("resultado"))
     
     return render_template("progreso.html", respuestas=respuestas)
