@@ -112,7 +112,6 @@ def registro():
 
     return render_template("registro.html")
 
-
 # 📌 Ruta de login
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -215,15 +214,10 @@ def ver_progreso():
     
     cursor.execute("SELECT pregunta, respuesta FROM respuestas WHERE id_usuario = ?", (usuario_id,))
     respuestas = cursor.fetchall()
-
-    total_respuestas = len(respuestas)
     
     conn.close()
 
-    if total_respuestas == len(preguntas):  # Si la encuesta está completa, ir al resultado
-        return redirect(url_for("resultado"))
-
-    return render_template("progreso.html", respuestas=respuestas )
+    return render_template("progreso.html", respuestas=respuestas)
 
 @app.route('/guardar_respuestas', methods=['POST'])
 def guardar_respuestas():
@@ -244,14 +238,8 @@ def guardar_respuestas():
                 DO UPDATE SET respuesta = excluded.respuesta
             """, (usuario_id, pregunta["texto"], respuesta))
 
-    cursor.execute("SELECT COUNT(*) FROM respuestas WHERE id_usuario = ?", (usuario_id,))
-    total_respuestas = cursor.fetchone()[0]
-
     conn.commit()
     conn.close()
-
-    if total_respuestas == len(preguntas):
-        return redirect(url_for("resultado"))
 
     return redirect(url_for("ver_progreso"))  # ✅ Después de guardar, ir al progreso
 
