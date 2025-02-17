@@ -218,9 +218,6 @@ def ver_progreso():
     
     conn.close()
 
-    if len(respuestas) == len(preguntas):
-        return redirect(url_for("resultado"))
-
     return render_template("progreso.html", respuestas=respuestas)
 
 # 📌 Ruta para cerrar sesión
