@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Usuario</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+    <div id="dashboard-container">
+        <h1>Hola, {{ nombre }} {{ apellido }} 👋</h1>
+        <p>Bienvenido a tu espacio en EDU-TECH.</p>
+        <p>Puedes continuar tu encuesta, ver tu progreso o salir.</p>
+
+        <div class="botones">
+            <a href="{{ url_for('encuesta') }}"><button>Continuar Encuesta</button></a>
+            <a href="{{ url_for('ver_progreso') }}"><button>Ver Progreso</button></a>
+            <a href="{{ url_for('logout') }}"><button>Cerrar Sesión</button></a>
+        </div>
+    </div>
+
+</body>
+</html>

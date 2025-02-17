@@ -23,6 +23,8 @@ preguntas = [
 def verificar_base_datos():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+
+    # Crear tabla de usuarios si no existe
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS usuarios (
         id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,8 +41,21 @@ def verificar_base_datos():
         geografia INTEGER
     )
     """)
+
+    # Crear tabla de respuestas, permitiendo actualizar respuestas
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS respuestas (
+        id_usuario INTEGER,
+        pregunta TEXT NOT NULL,
+        respuesta TEXT,
+        PRIMARY KEY (id_usuario, pregunta),
+        FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
+    )
+    """)
+
     conn.commit()
     conn.close()
+
 
 verificar_base_datos()
 
@@ -114,7 +129,7 @@ def login():
             session["nombre"] = usuario[1]
             session["apellido"] = usuario[2]
             session["email"] = email  
-            return redirect(url_for("dashboard"))  # 🔹 Lo redirigimos a una nueva página de bienvenida
+            return redirect(url_for("dashboard"))  # 🔹 Ahora redirige al dashboard en vez de la encuesta
         else:
             return render_template("login.html", error="⚠️ Email o contraseña incorrectos")
 
@@ -124,12 +139,20 @@ def login():
 @app.route('/encuesta', methods=['GET', 'POST'])
 def encuesta():
     if "usuario_id" not in session:
-        return redirect(url_for("login"))  # 🔴 Redirige a login si no ha iniciado sesión
+        return redirect(url_for("login"))
 
-    if request.method == "POST":
-        return redirect(url_for("resultado"))
+    usuario_id = session["usuario_id"]
 
-    return render_template("encuesta.html", preguntas=preguntas)  
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    # Obtener respuestas previas del usuario
+    cursor.execute("SELECT pregunta, respuesta FROM respuestas WHERE id_usuario = ?", (usuario_id,))
+    respuestas_previas = dict(cursor.fetchall())
+
+    conn.close()
+
+    return render_template("encuesta.html", preguntas=preguntas, respuestas_previas=respuestas_previas)
 
 # 📌 Ruta de resultados de la encuesta
 @app.route('/resultado', methods=['POST'])
@@ -159,6 +182,40 @@ def resultado():
 
     return render_template('resultado.html', nombre=nombre, apellido=apellido, 
                            estilo=estilo_predominante, rendimiento=rendimiento)
+
+@app.route('/guardar_respuestas', methods=['POST'])
+def guardar_respuestas():
+    if "usuario_id" not in session:
+        return redirect(url_for("login"))
+
+    usuario_id = session["usuario_id"]
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    for i, pregunta in enumerate(preguntas):
+        respuesta = request.form.get(f'pregunta{i}')
+        if respuesta:  # Solo guarda respuestas marcadas
+            cursor.execute("""
+                INSERT INTO respuestas (id_usuario, pregunta, respuesta)
+                VALUES (?, ?, ?)
+                ON CONFLICT(id_usuario, pregunta) 
+                DO UPDATE SET respuesta = excluded.respuesta
+            """, (usuario_id, pregunta["texto"], respuesta))
+
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("dashboard"))  # Redirige al usuario a su dashboard después de guardar
+
+@app.route('/dashboard')
+def dashboard():
+    if "usuario_id" not in session:
+        return redirect(url_for("login"))  # Redirige a login si no ha iniciado sesión
+
+    nombre = session["nombre"]
+    apellido = session["apellido"]
+    
+    return render_template("dashboard.html", nombre=nombre, apellido=apellido)
 
 # 📌 Ruta para cerrar sesión
 @app.route("/logout")

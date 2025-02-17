@@ -7,20 +7,28 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
+
     <h2>Encuesta de Estilo de Aprendizaje</h2>
 
-    {% if error %}
-        <p style="color: red;">{{ error }}</p>
-    {% endif %}
-
-    <form method="POST" action="{{ url_for('resultado') }}">
-        {% for pregunta in preguntas %}
+    <form method="POST" action="{{ url_for('guardar_respuestas') }}">
+        {% for i, pregunta in enumerate(preguntas) %}
             <p>{{ pregunta.texto }}</p>
-            <label><input type="radio" name="pregunta{{ loop.index0 }}" value="+" required> Sí</label>
-            <label><input type="radio" name="pregunta{{ loop.index0 }}" value="-"> No</label>
+            <label>
+                <input type="radio" name="pregunta{{ i }}" value="+" 
+                {% if respuestas_previas.get(pregunta.texto) == "+" %} checked {% endif %}>
+                Sí
+            </label>
+            <label>
+                <input type="radio" name="pregunta{{ i }}" value="-"
+                {% if respuestas_previas.get(pregunta.texto) == "-" %} checked {% endif %}>
+                No
+            </label>
             <br><br>
         {% endfor %}
-        <button type="submit">Enviar Respuestas</button>
+
+        <button type="submit">Guardar y Salir</button>
     </form>
+
 </body>
 </html>
+
