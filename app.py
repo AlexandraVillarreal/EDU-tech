@@ -238,7 +238,7 @@ def dashboard():
     return render_template("dashboard.html", nombre=session["nombre"], apellido=session["apellido"])
 
 # 📌 Ruta de resultados de la encuesta
-@app.route('/resultado', methods=['GET', 'POST'])
+@app.route('/resultado', methods=['POST'])
 def resultado():
     if "usuario_id" not in session:
         return redirect(url_for("login"))  
@@ -247,30 +247,32 @@ def resultado():
     nombre = session["nombre"]
     apellido = session["apellido"]
 
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    cursor.execute("SELECT pregunta, respuesta FROM respuestas WHERE id_usuario = ?", (usuario_id,))
-    respuestas = dict(cursor.fetchall())
-
-    conn.close()
+    respuestas = {f'pregunta{i}': request.form.get(f'pregunta{i}') for i in range(len(preguntas))}
 
     estilos = {"Activo": 0, "Reflexivo": 0, "Teórico": 0, "Pragmático": 0}
 
-    # Sumar respuestas por cada estilo de aprendizaje
-    for pregunta in preguntas:
-        respuesta = respuestas.get(pregunta["texto"])
-        if respuesta == "+":
-            estilos[pregunta["estilo"]] += 1
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    for i, pregunta in enumerate(preguntas):
+        respuesta = respuestas[f'pregunta{i}']
+        estilos[pregunta["estilo"]] += (1 if respuesta == "+" else 0)
 
-    # 📌 Obtener el estilo de aprendizaje predominante
-    estilo_predominante = max(estilos, key=estilos.get)
+        cursor.execute("""
+            INSERT INTO respuestas (id_usuario, pregunta, respuesta)
+            VALUES (?, ?, ?)
+            ON CONFLICT(id_usuario, pregunta) 
+            DO UPDATE SET respuesta = excluded.respuesta
+        """, (usuario_id, pregunta["texto"], respuesta))
+
+    conn.commit()
+    conn.close()
 
     # 📌 Obtener rendimiento académico del usuario
     rendimiento = CalculoDeRendimiento.obtener_rendimiento(nombre, apellido)
 
     return render_template('resultado.html', nombre=nombre, apellido=apellido, 
-                           estilo=estilo_predominante, rendimiento=rendimiento)
+                           estilo=max(estilos, key=estilos.get), rendimiento=rendimiento)
 
 @app.route("/ver_progreso")
 def ver_progreso():
@@ -287,11 +289,6 @@ def ver_progreso():
     
     conn.close()
 
-    total_respuestas = 80
-
-    if total_respuestas == 80:  # ✅ Si está completa, ir a resultado
-        return redirect(url_for("resultado"))
-    
     return render_template("progreso.html", respuestas=respuestas)
 
 @app.route('/guardar_respuestas', methods=['POST'])
@@ -316,7 +313,7 @@ def guardar_respuestas():
     conn.commit()
     conn.close()
 
-    return redirect(url_for("ver_progreso"))  # ✅ Ahora irá a ver progreso
+    return redirect(url_for("ver_progreso"))  # ✅ Después de guardar, ir al progreso
 
 # 📌 Ruta para cerrar sesión
 @app.route("/logout")
