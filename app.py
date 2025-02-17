@@ -220,6 +220,30 @@ def ver_progreso():
 
     return render_template("progreso.html", respuestas=respuestas)
 
+@app.route('/guardar_respuestas', methods=['POST'])
+def guardar_respuestas():
+    if "usuario_id" not in session:
+        return redirect(url_for("login"))
+
+    usuario_id = session["usuario_id"]
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    for i, pregunta in enumerate(preguntas):
+        respuesta = request.form.get(f'pregunta{i}')
+        if respuesta:  # Solo guarda respuestas marcadas
+            cursor.execute("""
+                INSERT INTO respuestas (id_usuario, pregunta, respuesta)
+                VALUES (?, ?, ?)
+                ON CONFLICT(id_usuario, pregunta) 
+                DO UPDATE SET respuesta = excluded.respuesta
+            """, (usuario_id, pregunta["texto"], respuesta))
+
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("ver_progreso"))  # ✅ Después de guardar, ir al progreso
+
 # 📌 Ruta para cerrar sesión
 @app.route("/logout")
 def logout():
