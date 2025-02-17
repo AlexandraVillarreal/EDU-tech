@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Respuestas Guardadas</title>
+</head>
+<body>
+    <h2>📊 Respuestas de tu Encuesta</h2>
+    <ul>
+        {% for pregunta, respuesta in respuestas %}
+            <li><strong>{{ pregunta }}</strong>: {{ "Sí" if respuesta == "+" else "No" }}</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{{ url_for('logout') }}">Cerrar Sesión</a>
+</body>
+</html>
