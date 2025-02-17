@@ -218,8 +218,6 @@ def ver_progreso():
     
     conn.close()
 
-    encuesta_completa = len(respuestas) == len(preguntas)
-
     return render_template("progreso.html", respuestas=respuestas)
 
 # 📌 Ruta para cerrar sesión
