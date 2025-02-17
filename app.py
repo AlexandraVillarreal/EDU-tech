@@ -67,7 +67,7 @@ class CalculoDeRendimiento:
 # 📌 Ruta principal (Redirige al registro si no ha iniciado sesión)
 @app.route('/')
 def home():
-    return render_template("bienvenida.html"))  
+    return render_template("bienvenida.html")  
 
 # 📌 Ruta de registro de estudiante
 @app.route("/registro", methods=["GET", "POST"])
