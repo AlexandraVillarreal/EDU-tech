@@ -10,7 +10,7 @@
 
     <h2>Encuesta de Estilo de Aprendizaje</h2>
 
-    <form id="encuestaForm" method="POST" action="{{ url_for('guardar_respuestas') }}">
+    <form id="encuestaForm" method="POST" action="{{ url_for('resultado') }}">
         {% for pregunta in preguntas %}
             <p>{{ pregunta.texto }}</p>
             <label>
@@ -26,32 +26,9 @@
             <br><br>
         {% endfor %}
 
-        <!-- Botón de guardar -->
-        <button type="submit">Guardar y Salir</button>
-
-        <!-- Botón de ver resultados, inicialmente deshabilitado -->
-        <button id="verResultados" type="button" disabled onclick="enviarResultados()">Ver Resultados</button>
+        <!-- Botón de ver resultados SIEMPRE habilitado -->
+        <button type="submit">Ver Resultados</button>
     </form>
-
-    <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const form = document.getElementById("encuestaForm");
-        const botonResultados = document.getElementById("verResultados");
-        const totalPreguntas = {{preguntas|length}};  // Se pasa el número total de preguntas desde Jinja a JS
-
-        function verificarRespuestasCompletas() {
-            const respuestas = document.querySelectorAll("input[type='radio']:checked");
-            botonResultados.disabled = respuestas.length !== totalPreguntas;
-        }
-
-        // Escuchar cambios en las respuestas
-        form.addEventListener("change", verificarRespuestasCompletas);});
-
-    function enviarResultados() {
-        document.getElementById("encuestaForm").action = "{{ url_for('resultado') }}";
-        document.getElementById("encuestaForm").submit();
-    }
-    </script>
 
 </body>
 </html>
