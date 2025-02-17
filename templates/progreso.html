@@ -2,34 +2,27 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tu Progreso</title>
+    <title>Tu Progreso en la Encuesta</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
 
-    <div id="progreso-container">
-        <h1>Tu Progreso en la Encuesta</h1>
-        
-        {% if respuestas %}
-            <ul>
-                {% for pregunta, respuesta in respuestas %}
-                    <li><strong>{{ pregunta }}</strong>: {{ "Sí" if respuesta == "+" else "No" }}</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>Aún no has realizado la encuesta.</p>
-        {% endif %}
+    <h2>Tu Progreso en la Encuesta</h2>
+    <ul>
+        {% for pregunta, respuesta in respuestas %}
+            <li><strong>{{ pregunta }}</strong>: {{ "Sí" if respuesta == "+" else "No" }}</li>
+        {% endfor %}
+    </ul>
 
-        <div class="botones">
-            {% if respuestas %}
-                <a href="{{ url_for('dashboard') }}"><button>Volver al Dashboard</button></a>
-            {% else %}
-                <a href="{{ url_for('encuesta') }}"><button>Resolver Encuesta</button></a>
-            {% endif %}
-        </div>
+    <div class="botones">
+        <a href="{{ url_for('dashboard') }}"><button>Volver al Dashboard</button></a>
+
+        {% if not encuesta_completa %}
+            <a href="{{ url_for('encuesta') }}"><button>Completar Encuesta</button></a>
+        {% else %}
+            <a href="{{ url_for('resultado') }}"><button>Ver Resultado</button></a>
+        {% endif %}
     </div>
 
 </body>
 </html>
-
