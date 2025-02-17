@@ -3,25 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bienvenido a la Encuesta</title>
+    <title>Bienvenido a EDU-TECH</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
 
-    <header>
+    <div id="welcome-container">
         <h1>Bienvenido a EDU-TECH</h1>
-    </header>
-
-    <section>
-        <p>Esta pagina web esta diseñada para ayudar a los estudiantes a mejorar sus métodos de estudios usando apps de estudio.</p>
+        <p>Esta página te ayudará a mejorar tus métodos de estudio mediante aplicaciones educativas.</p>
         <p>¿SABIAS QUE CADA PERSONA TIENE UN ESTILO DE APRENDIZAJE?</p>
-        <p>Puedes descubrir cuál es tu estilo de aprendizaje mediante nuestro cuestionario basado en el modelo de Honey-Alonso.</p>
-        <p>Según tus respuestas, te recomendaremos herramientas y aplicaciones que se adapten a tu forma de aprender.</p>
-    </section>
+        <p>Descubre cuál es tu estilo de aprendizaje con nuestro cuestionario basado en el modelo de Honey-Alonso.</p>
+        <p>Según tus respuestas, te recomendaremos herramientas y apps adaptadas a tu forma de aprender.</p>
 
-    <div class="botones">
-        <a href="{{ url_for('registro') }}"><button>Registrarse</button></a>
-        <a href="{{ url_for('login') }}"><button>Iniciar Sesión</button></a>
+        <div class="botones">
+            <a href="{{ url_for('registro') }}"><button>Registrarse</button></a>
+            <a href="{{ url_for('login') }}"><button>Iniciar Sesión</button></a>
+        </div>
     </div>
 
 </body>

@@ -67,9 +67,7 @@ class CalculoDeRendimiento:
 # 📌 Ruta principal (Redirige al registro si no ha iniciado sesión)
 @app.route('/')
 def home():
-    if "usuario_id" in session:
-        return redirect(url_for("bienvenida.html"))  
-    return redirect(url_for("encuesta"))
+    return render_template("bienvenida.html"))  
 
 # 📌 Ruta de registro de estudiante
 @app.route("/registro", methods=["GET", "POST"])
@@ -116,7 +114,7 @@ def login():
             session["nombre"] = usuario[1]
             session["apellido"] = usuario[2]
             session["email"] = email  
-            return redirect(url_for("encuesta"))  
+            return redirect(url_for("dashboard"))  # 🔹 Lo redirigimos a una nueva página de bienvenida
         else:
             return render_template("login.html", error="⚠️ Email o contraseña incorrectos")
 
@@ -126,7 +124,7 @@ def login():
 @app.route('/encuesta', methods=['GET', 'POST'])
 def encuesta():
     if "usuario_id" not in session:
-        return redirect(url_for("login"))
+        return redirect(url_for("login"))  # 🔴 Redirige a login si no ha iniciado sesión
 
     if request.method == "POST":
         return redirect(url_for("resultado"))
