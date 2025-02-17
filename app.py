@@ -125,6 +125,23 @@ def dashboard():
     
     return render_template("dashboard.html", nombre=nombre, apellido=apellido)
 
+@app.route("/ver_progreso")
+def ver_progreso():
+    if "usuario_id" not in session:
+        return redirect(url_for("login"))  # Redirige a login si el usuario no ha iniciado sesión
+
+    usuario_id = session["usuario_id"]
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT pregunta, respuesta FROM respuestas WHERE id_usuario = ?", (usuario_id,))
+    respuestas = cursor.fetchall()
+    
+    conn.close()
+
+    return render_template("progreso.html", respuestas=respuestas)
+
 # 📌 Ruta de la encuesta
 @app.route('/encuesta', methods=['GET', 'POST'])
 def encuesta():
