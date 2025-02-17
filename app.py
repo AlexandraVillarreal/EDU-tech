@@ -255,15 +255,16 @@ def resultado():
     cursor = conn.cursor()
     
     for i, pregunta in enumerate(preguntas):
-        respuesta = respuestas[f'pregunta{i}']
-        estilos[pregunta["estilo"]] += (1 if respuesta == "+" else 0)
+        respuesta = respuestas.get(f'pregunta{i}')
+        if respuesta:
+            estilos[pregunta["estilo"]] += (1 if respuesta == "+" else 0)
 
-        cursor.execute("""
-            INSERT INTO respuestas (id_usuario, pregunta, respuesta)
-            VALUES (?, ?, ?)
-            ON CONFLICT(id_usuario, pregunta) 
-            DO UPDATE SET respuesta = excluded.respuesta
-        """, (usuario_id, pregunta["texto"], respuesta))
+            cursor.execute("""
+                INSERT INTO respuestas (id_usuario, pregunta, respuesta)
+                VALUES (?, ?, ?)
+                ON CONFLICT(id_usuario, pregunta) 
+                DO UPDATE SET respuesta = excluded.respuesta
+            """, (usuario_id, pregunta["texto"], respuesta))
 
     conn.commit()
     conn.close()
