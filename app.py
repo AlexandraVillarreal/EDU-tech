@@ -109,7 +109,7 @@ def registro():
 
         return redirect(url_for("login"))
 
-    return render_template("registro.html")
+    return render_template("encuesta.html")
 
 # 📌 Ruta de login
 @app.route("/login", methods=["GET", "POST"])
