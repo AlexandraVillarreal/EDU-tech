@@ -170,6 +170,29 @@ def verificar_base_datos():
 
 verificar_base_datos()
 
+class CalculoDeRendimiento:
+    @staticmethod
+    def obtener_rendimiento(nombre, apellido):
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT matematicas, historia, fisica, quimica, biologia, ingles, geografia
+            FROM usuarios WHERE nombre = ? AND apellido = ?
+        """, (nombre, apellido))
+        rendimiento = cursor.fetchone()
+        conn.close()
+
+        if rendimiento:
+            notas = [nota for nota in rendimiento if nota is not None]
+            if notas:
+                promedio = sum(notas) / len(notas)
+                tipo_rendimiento = pd.cut([promedio], bins=[0, 70, 80, 90, 100], labels=['Bajo', 'Básico', 'Alto', 'Superior'])[0]
+                return {
+                    "promedio": round(promedio, 2),
+                    "tipo_rendimiento": tipo_rendimiento
+                }
+        return {"promedio": "N/A", "tipo_rendimiento": "Sin datos"}
+
 # 📌 Ruta principal (Muestra la bienvenida)
 @app.route('/')
 def home():
@@ -319,28 +342,16 @@ def resultado():
         if respuesta == '+':
             estilos[pregunta["estilo"]] += 1  
 
-    # Determinar el estilo predominante
     estilo_predominante = max(estilos, key=estilos.get)
 
-    # Obtener rendimiento académico desde la base de datos
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT matematicas, historia, fisica, quimica, biologia, ingles, geografia
-        FROM usuarios WHERE id_usuario = ?
-    """, (session["usuario_id"],))
+    rendimiento = CalculoDeRendimiento.obtener_rendimiento(nombre, apellido)
+    tipo_rendimiento = rendimiento["tipo_rendimiento"]
+    promedio_rendimiento = rendimiento["promedio"]
     
-    rendimiento = cursor.fetchone()
-    conn.close()
+    return render_template('resultado.html', nombre=nombre, apellido=apellido, 
+                           estilo=estilo_predominante, tipo_rendimiento=tipo_rendimiento,
+                           promedio_rendimiento=promedio_rendimiento, respuestas=respuestas)
 
-    if rendimiento:
-        materias = ["Matematicas", "Historia", "Fisica", "Quimica", "Biologia", "Ingles", "Geografia"]
-        rendimiento_dict = {materias[i]: rendimiento[i] for i in range(len(materias))}
-    else:
-        rendimiento_dict = {}
-
-    return render_template('resultado.html', nombre=session["nombre"], apellido=session["apellido"], 
-                           estilo=estilo_predominante, rendimiento=rendimiento_dict, respuestas=respuestas)
 
 @app.route("/ver_progreso")
 def ver_progreso():
