@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inicio Encuesta</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="contenedor-imagen">
+        <img src="{{ url_for('static', filename='imagen1.jpg') }}" alt="Imagen 1">
+    </div>
+    
+    <div class="boton">
+        <a href="{{ url_for('encuesta', pagina=1) }}">
+            <button>Comenzar Encuesta</button>
+        </a>
+    </div>
+</body>
+</html>

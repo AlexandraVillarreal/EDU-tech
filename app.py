@@ -15,7 +15,7 @@ def verificar_base_datos():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # Tabla de usuarios
+    # Crear tabla de usuarios (ya está en tu código)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS usuarios (
         id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -23,23 +23,19 @@ def verificar_base_datos():
         contraseña TEXT NOT NULL,
         nombre TEXT NOT NULL,
         apellido TEXT NOT NULL,
-        matematicas INTEGER,
-        historia INTEGER,
-        fisica INTEGER,
-        quimica INTEGER,
-        biologia INTEGER,
-        ingles INTEGER,
-        geografia INTEGER
+        ciclo_1 INTEGER,
+        ciclo_2 INTEGER,
+        ciclo_3 INTEGER
     )
     """)
 
-    # Tabla de respuestas (Guarda respuestas por usuario)
+    # CREAR LA TABLA RESPUESTAS (Asegurar que existe)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS respuestas (
-        id_usuario INTEGER PRIMARY KEY,
-        pregunta_1 TEXT,
-        pregunta_2 TEXT,
-        pregunta_3 TEXT,          
+        id_usuario INTEGER,
+        pregunta TEXT NOT NULL,
+        respuesta TEXT,
+        PRIMARY KEY (id_usuario, pregunta),
         FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
     )
     """)
@@ -47,7 +43,8 @@ def verificar_base_datos():
     conn.commit()
     conn.close()
 
-# 📌 Preguntas de la encuesta
+
+# Preguntas de la encuesta
 preguntas =  [
             {"texto": "1. Tengo fama de decir lo que pienso claramente y sin rodeos.", "estilo": "Pragmático"},
             {"texto": "2. Estoy seguro/a de lo que es bueno y malo, lo que está bien y lo que está mal.", "estilo": "Teórico"},
@@ -131,52 +128,13 @@ preguntas =  [
             {"texto": "80. Esquivo los temas subjetivos, ambiguos y poco claros.", "estilo": "Pragmático"},
             ]
 
-# 📌 Verificar si la base de datos existe y crearla si no
-def verificar_base_datos():
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    # Crear tabla de usuarios si no existe
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS usuarios (
-        id_usuario INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT UNIQUE NOT NULL,
-        contraseña TEXT NOT NULL,
-        nombre TEXT NOT NULL,
-        apellido TEXT NOT NULL,
-        matematicas INTEGER,
-        historia INTEGER,
-        fisica INTEGER,
-        quimica INTEGER,
-        biologia INTEGER,
-        ingles INTEGER,
-        geografia INTEGER
-    )
-    """)
-
-    # Crear tabla de respuestas, permitiendo actualizar respuestas
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS respuestas (
-        id_usuario INTEGER,
-        pregunta TEXT NOT NULL,
-        respuesta TEXT,
-        PRIMARY KEY (id_usuario, pregunta),
-        FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
-    )
-    """)
-
-    conn.commit()
-    conn.close()
-
-verificar_base_datos()
-
 class CalculoDeRendimiento:
     @staticmethod
     def obtener_rendimiento(nombre, apellido):
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT matematicas, historia, fisica, quimica, biologia, ingles, geografia
+            SELECT ciclo_1, ciclo_2, ciclo_3
             FROM usuarios WHERE nombre = ? AND apellido = ?
         """, (nombre, apellido))
         rendimiento = cursor.fetchone()
@@ -186,24 +144,24 @@ class CalculoDeRendimiento:
             notas = [nota for nota in rendimiento if nota is not None]
             if notas:
                 promedio = sum(notas) / len(notas)
-                tipo_rendimiento = pd.cut([promedio], bins=[0, 70, 80, 90, 100], labels=['Bajo', 'Básico', 'Alto', 'Superior'])[0]
+                tipo_rendimiento = pd.cut([promedio], bins=[-float("inf"), 5.99, 9.99, 10.99, 12.99, 13.99, 20], labels=['Reprobado (D-)', 'Desaprobado (D)', 'Aprobado (C)', 'Bueno (B)', 'Muy Bueno (A)', 'Excelente (A+)'])[0]
                 return {
                     "promedio": round(promedio, 2),
                     "tipo_rendimiento": tipo_rendimiento
                 }
         return {"promedio": "N/A", "tipo_rendimiento": "Sin datos"}
 
-# 📌 Ruta principal (Muestra la bienvenida)
+# Ruta principal (Muestra la bienvenida)
 @app.route('/')
 def home():
     return render_template("bienvenida.html")  
 
 def home1():
     if "usuario_id" in session:
-        return redirect(url_for("dashboard"))  # Si ya está logueado, redirige al dashboard
+        return redirect(url_for("dashboard"))  # Si ya está logueado, redirige al dashboard(panel)
     return redirect(url_for("registro"))
  
-# 📌 Ruta de registro de estudiante
+# Ruta de registro de estudiante
 @app.route("/registro", methods=["GET", "POST"])
 def registro():
     if request.method == "POST":
@@ -213,13 +171,9 @@ def registro():
         apellido = request.form.get("apellido").strip().title()
 
         # Obtener las calificaciones
-        matematicas = request.form.get("matematicas")
-        historia = request.form.get("historia")
-        fisica = request.form.get("fisica")
-        quimica = request.form.get("quimica")
-        biologia = request.form.get("biologia")
-        ingles = request.form.get("ingles")
-        geografia = request.form.get("geografia")
+        ciclo_1 = request.form.get("ciclo_1")
+        ciclo_2 = request.form.get("ciclo_2")
+        ciclo_3 = request.form.get("ciclo_3")
 
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
@@ -230,13 +184,13 @@ def registro():
 
         if usuario_existente:
             conn.close()
-            return render_template("registro.html", error="⚠️ Este email ya está registrado. Intenta iniciar sesión.")
+            return render_template("registro.html", error="Este email ya está registrado. Intenta iniciar sesión.")
 
         # Insertar el nuevo usuario en SQLite
         cursor.execute("""
-            INSERT INTO usuarios (email, contraseña, nombre, apellido, matematicas, historia, fisica, quimica, biologia, ingles, geografia) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (email, contraseña, nombre, apellido, matematicas, historia, fisica, quimica, biologia, ingles, geografia))
+            INSERT INTO usuarios (email, contraseña, nombre, apellido, ciclo_1, ciclo_2, ciclo_3) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (email, contraseña, nombre, apellido, ciclo_1, ciclo_2, ciclo_3))
 
         conn.commit()
         conn.close()
@@ -249,24 +203,20 @@ def registro():
             "Nombre": [nombre],
             "Apellido": [apellido],
             "Email": [email],
-            "Matematicas": [matematicas],
-            "Historia": [historia],
-            "Fisica": [fisica],
-            "Quimica": [quimica],
-            "Biologia": [biologia],
-            "Ingles": [ingles],
-            "Geografia": [geografia]
+            "ciclo_1": [ciclo_1],
+            "ciclo_2": [ciclo_2],
+            "ciclo_3": [ciclo_3]
         })
 
         # Agregar la fila al dataset
         df = pd.concat([df, nueva_fila], ignore_index=True)
         df.to_csv(DATASET_PATH, index=False)
 
-        return redirect(url_for("login"))  # ✅ Redirige al login después del registro
+        return redirect(url_for("login"))  # Redirige al login después del registro
 
     return render_template("registro.html")
 
-# 📌 Ruta de login
+# Ruta de login
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -290,41 +240,77 @@ def login():
 
     return render_template("login.html")
 
-# 📌 Ruta del Dashboard
+# Ruta del Dashboard
 @app.route('/dashboard')
 def dashboard():
     if "usuario_id" not in session:
-        return redirect(url_for("login"))  # 🔹 Si no hay sesión, redirige a login
+        return redirect(url_for("login"))  # Si no hay sesión, redirige a login
 
     nombre = session["nombre"]
     apellido = session["apellido"]
 
     return render_template("dashboard.html", nombre=nombre, apellido=apellido)
 
-@app.route('/encuesta', methods=['GET', 'POST'])
-def encuesta():
+@app.route('/imagen1')
+def imagen1():
+    return render_template("imagen1.html")
+
+@app.route('/imagen2')
+def imagen2():
+    return render_template("imagen2.html")
+
+@app.route('/imagen3')
+def imagen3():
+    return render_template("imagen3.html")
+
+@app.route('/imagen4')
+def imagen4():
+    return render_template("imagen4.html")
+
+@app.route('/encuesta/<int:pagina>', methods=['GET', 'POST'])
+def encuesta(pagina):
     if "usuario_id" not in session:
         return redirect(url_for("login"))
 
     usuario_id = session["usuario_id"]
+
+    inicio = (pagina - 1) * 20
+    fin = inicio + 20
+    preguntas_pagina = preguntas[inicio:fin]
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-
-    # Obtener respuestas previas del usuario
     cursor.execute("SELECT pregunta, respuesta FROM respuestas WHERE id_usuario = ?", (usuario_id,))
-    respuestas_guardadas = cursor.fetchone()
-    respuestas_previas = dict(cursor.fetchall())
+    respuestas_previas = dict(cursor.fetchall())  
     conn.close()
 
-    respuestas_dict = {}
-    if respuestas_guardadas:
-        for i, respuesta in enumerate(respuestas_guardadas):
-            respuestas_dict[f'pregunta_{i+1}'] = respuesta  # Convertir a diccionario
+    if request.method == "POST":
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        for i, pregunta in enumerate(preguntas_pagina):
+            respuesta = request.form.get(f'pregunta{inicio + i + 1}')
+            if respuesta:
+                cursor.execute("""
+                INSERT OR REPLACE INTO respuestas (id_usuario, pregunta, respuesta)
+                VALUES (?, ?, ?)
+                """, (usuario_id, pregunta["texto"], respuesta))
 
-    return render_template("encuesta.html", preguntas=preguntas, respuestas=respuestas_dict, respuestas_previas=respuestas_previas)
+        conn.commit()
+        conn.close()
 
-# 📌 Ruta de resultados de la encuesta
-@app.route('/resultado', methods=['POST'])
+        if pagina == 1:
+            return redirect(url_for("imagen2"))
+        elif pagina == 2:
+            return redirect(url_for("imagen3"))
+        elif pagina == 3:
+            return redirect(url_for("imagen4"))
+        elif pagina == 4:
+            return redirect(url_for("resultado"))
+
+    return render_template(f"encuesta{pagina}.html", preguntas=preguntas_pagina, pagina=pagina, total_paginas=4, respuestas_previas=respuestas_previas)
+
+# Ruta de resultados de la encuesta
+@app.route('/resultado', methods=['GET', 'POST'])
 def resultado():
     if "usuario_id" not in session:
         return redirect(url_for("login"))  
@@ -333,7 +319,7 @@ def resultado():
     nombre = session["nombre"]
     apellido = session["apellido"]
 
-    respuestas = {f'pregunta{i}': request.form.get(f'pregunta{i}') for i in range(len(preguntas))}
+    respuestas = {f'pregunta{i}': session.get(f'pregunta{i}') for i in range(1, 81)}
 
     estilos = {"Activo": 0, "Reflexivo": 0, "Teórico": 0, "Pragmático": 0}
 
@@ -345,13 +331,32 @@ def resultado():
     estilo_predominante = max(estilos, key=estilos.get)
 
     rendimiento = CalculoDeRendimiento.obtener_rendimiento(nombre, apellido)
-    tipo_rendimiento = rendimiento["tipo_rendimiento"]
     promedio_rendimiento = rendimiento["promedio"]
-    
-    return render_template('resultado.html', nombre=nombre, apellido=apellido, 
-                           estilo=estilo_predominante, tipo_rendimiento=tipo_rendimiento,
-                           promedio_rendimiento=promedio_rendimiento, respuestas=respuestas)
+    tipo_rendimiento = rendimiento["tipo_rendimiento"]
 
+    # Agregar la lógica para determinar la última página respondida
+    ultima_pagina = 1  # Por defecto, empezar en la página 1
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(DISTINCT pregunta) FROM respuestas WHERE id_usuario = ?", (usuario_id,))
+    num_respuestas = cursor.fetchone()[0]
+    conn.close()
+
+    # Ajustar la última página basada en la cantidad de respuestas guardadas
+    if num_respuestas > 60:
+        ultima_pagina = 4
+    elif num_respuestas > 40:
+        ultima_pagina = 3
+    elif num_respuestas > 20:
+        ultima_pagina = 2
+
+    return render_template('resultado.html', 
+                           nombre=nombre, apellido=apellido, 
+                           estilo=estilo_predominante, 
+                           promedio_rendimiento=promedio_rendimiento, 
+                           tipo_rendimiento=tipo_rendimiento, 
+                           ultima_pagina=ultima_pagina)
 
 @app.route("/ver_progreso")
 def ver_progreso():
@@ -392,9 +397,9 @@ def guardar_respuestas():
     conn.commit()
     conn.close()
 
-    return redirect(url_for("ver_progreso"))  # ✅ Después de guardar, ir al progreso
+    return redirect(url_for("ver_progreso"))  # Después de guardar, ir al progreso
 
-# 📌 Ruta para cerrar sesión
+# Ruta para cerrar sesión
 @app.route("/logout")
 def logout():
     session.clear()

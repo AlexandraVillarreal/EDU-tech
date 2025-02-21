@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Encuesta - Parte 1</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        body {
+            background-image: url("{{ url_for('static', filename='fondo1.jpg') }}");
+            background-size: cover;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Encuesta - Parte 1</h2>
+
+    <form method="POST">
+        {% for pregunta in preguntas %}
+            <p> {{ pregunta.texto }}</p>
+    
+            <label>
+                <input type="radio" name="pregunta{{ loop.index + (pagina - 1) * 20 }}" value="+" 
+                {% if respuestas_previas and respuestas_previas.get(pregunta.texto, '') == '+' %} checked {% endif %}> Sí
+            </label>
+    
+            <label>
+                <input type="radio" name="pregunta{{ loop.index + (pagina - 1) * 20 }}" value="-"
+                {% if respuestas_previas and respuestas_previas.get(pregunta.texto, '') == '-' %} checked {% endif %}> No
+            </label>
+    
+            <br><br>
+        {% endfor %}
+    
+        <div class="botones">
+            {% if pagina > 1 %}
+    <a href="{{ url_for('encuesta', pagina=pagina-1) }}">
+        <button type="button">Atrás</button>
+    </a>
+{% else %}
+    <a href="{{ url_for('dashboard') }}">
+        <button type="button">Volver al inicio</button>
+    </a>
+{% endif %}
+    
+            <button type="submit">Siguiente</button>
+        </div>
+    </form>
+
+</body>
+
+</html>
