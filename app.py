@@ -360,17 +360,22 @@ def resultado():
     respuestas = dict(cursor.fetchall())  # Convertir a diccionario para fácil acceso
     conn.close()
 
+    print("Respuestas obtenidas de la BD:", respuestas)
+
     estilos = {"Activo": 0, "Reflexivo": 0, "Teórico": 0, "Pragmático": 0}
 
     for i, pregunta in enumerate(preguntas):
-        respuesta = respuestas.get(f'pregunta_{i+1}')
+        respuesta = respuestas.get(pregunta["texto"])  # Cambiar clave de acceso a la pregunta real
         if respuesta == '+':
             estilos[pregunta["estilo"]] += 1  
 
+    print("Conteo de estilos antes de elegir:", estilos)
+
     estilo_predominante = max(estilos, key=estilos.get)
 
-    print(f"Guardando estilo '{estilo_predominante}' para usuario ID {usuario_id}")
-    
+    print(f"Estilo seleccionado: {estilo_predominante}")
+    print(f"Actualizando estilo en la BD: {estilo_predominante} para usuario ID {usuario_id}")
+
     # Guardar el estilo de aprendizaje en la base de datos
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
@@ -462,7 +467,8 @@ def guardar_respuestas():
     cursor = conn.cursor()
 
     for i, pregunta in enumerate(preguntas):
-        respuesta = request.form.get(f'pregunta{i}')
+        respuesta = request.form.get(pregunta["texto"])
+
         if respuesta:  # Solo guarda respuestas marcadas
             cursor.execute("""
                 INSERT INTO respuestas (id_usuario, pregunta, respuesta)
@@ -470,6 +476,8 @@ def guardar_respuestas():
                 ON CONFLICT(id_usuario, pregunta) 
                 DO UPDATE SET respuesta = excluded.respuesta
             """, (usuario_id, pregunta["texto"], respuesta))
+    
+    print(f"Guardando respuesta '{respuesta}' para la pregunta '{pregunta['texto']}'")
 
     conn.commit()
     conn.close()
