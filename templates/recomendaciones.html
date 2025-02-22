@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recomendaciones</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Recomendaciones de Aplicaciones</h1>
+    <p>Basado en tu estilo de aprendizaje: <strong>{{ Estilos }}</strong></p>
+
+    {% if recomendaciones %}
+        <ul>
+            {% for app in recomendaciones %}
+            <li>
+                <h2>{{ app }}</h2>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No hay recomendaciones disponibles para este estilo de aprendizaje.</p>
+    {% endif %}
+
+    <a href="{{ url_for('dashboard') }}">Volver al Inicio</a>
+</body>
+</html>

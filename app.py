@@ -150,6 +150,41 @@ class CalculoDeRendimiento:
                     "tipo_rendimiento": tipo_rendimiento
                 }
         return {"promedio": "N/A", "tipo_rendimiento": "Sin datos"}
+    
+class HerramientasEducativas:
+    herramientas = [
+        {"nombre": "Sololearn: Es una aplicación y plataforma web que sirve para aprender a programar.", "tipo_app": "Activo"},
+        {"nombre": "Duolingo: Es una aplicación gamificada para aprender idiomas con ejercicios interactivos.", "tipo_app": "Activo"},
+        {"nombre": "Evernote: Es una aplicación para tomar notas, organizar información y gestionar tareas.", "tipo_app": "Reflexivo"},
+        {"nombre": "MindMeister: Es una aplicación para crear mapas mentales y organizar ideas visualmente.", "tipo_app": "Reflexivo"},
+        {"nombre": "Khan Academy: Es una plataforma educativa que te ayudará con cursos de matemáticas, ciencias y otros temas, con videos y ejercicios.", "tipo_app": "Teórico"},
+        {"nombre": "Wolfram Alpha: Es un Motor de conocimiento computacional que resuelve ecuaciones y responde preguntas científicas.", "tipo_app": "Teórico"},
+        {"nombre": "PhET Interactive Simulations: Es una app que realiza simulaciones interactivas para entender conceptos de matemáticas y ciencias.", "tipo_app": "Pragmático"},
+        {"nombre": "Virtual ChemLab: Es una app que muestra laboratorio de química virtual para experimentación en un entorno seguro.", "tipo_app": "Pragmático"},
+        {"nombre": "Photomath: Te ayudará a resolver problemas matemáticos escaneando con la cámara y muestra paso a paso la solución.", "tipo_app": "Pragmático"},
+        {"nombre": "Mathway: Es una calculadora avanzada que resuelve problemas matemáticos y algebraicos con explicaciones.", "tipo_app": "Pragmático"},
+        {"nombre": "Demos graphing calculator: Es una calculadora gráfica avanzada para visualizar ecuaciones y funciones matemáticas.", "tipo_app": "Activo"},
+        {"nombre": "Periodic tablet: Es una app que muestra una tabla periódica interactiva con propiedades de los elementos.", "tipo_app": "Reflexivo"},
+        {"nombre": "ChemCrafter: Es un juego educativo que permite experimentar con reacciones químicas virtuales.", "tipo_app": "Activo"},
+        {"nombre": "Chemistry dictionary: Es un diccionario con términos y definiciones de química.", "tipo_app": "Teórico"},
+        {"nombre": "Chemistry helper: Es una aplicación para cálculos y referencias en química.", "tipo_app": "Teórico"},
+        {"nombre": "MEL Chemistry: Es una plataforma con experiencias de química en realidad aumentada y videos educativos.", "tipo_app": "Activo"},
+        {"nombre": "Physics Toolbox: Es una app donde puedes encontrar un conjunto de herramientas para mediciones físicas usando sensores del móvil.\n", "tipo_app": "Activo"},
+        {"nombre": "Physics Calculator: Es una app donde puedes usar una calculadora con fórmulas físicas para resolver problemas.", "tipo_app": "Activo"},
+        {"nombre": "PHYWIZ: Es una app que te proporciona un asistente de física que resuelve problemas y explica conceptos.", "tipo_app": "Teórico"},
+        {"nombre": "Fizyka: Es una aplicación educativa sobre física con simulaciones y explicaciones.", "tipo_app": "Teórico"},
+        {"nombre": "Coursera: Es una plataforma con cursos en línea de universidades y empresas reconocidas.", "tipo_app": "Reflexivo"},
+        {"nombre": "TED: Es una aplicación con charlas inspiradoras de expertos en diversos campos.", "tipo_app": "Reflexivo"},
+        {"nombre": "GeoGebra: Es una herramienta interactiva para álgebra, geometría, cálculo y estadística.", "tipo_app": "Activo"},
+        {"nombre": "Algebrator: Es una app que ayuda a resolver ecuaciones algebraicas con explicaciones detalladas.", "tipo_app": "Pragmático"},
+        {"nombre": "Chemcollective: Es una app en donde puedes usar herramientas y simulaciones de química para la educación.", "tipo_app": "Reflexivo"},
+        {"nombre": "Rosetta Stone: Es una aplicación que usa un método de aprendizaje de idiomas basado en la inmersión.", "tipo_app": "Pragmático"},
+        {"nombre": "Babbel: Es una plataforma de aprendizaje de idiomas con cursos estructurados y lecciones interactivas.", "tipo_app": "Pragmático"},
+        ]
+    
+    @classmethod
+    def obtener_herramientas_recomendadas(cls, estilo):
+        return [h["nombre"].replace("\n", "").strip() for h in cls.herramientas if h["tipo_app"] == estilo]
 
 # Ruta principal (Muestra la bienvenida)
 @app.route('/')
@@ -319,7 +354,11 @@ def resultado():
     nombre = session["nombre"]
     apellido = session["apellido"]
 
-    respuestas = {f'pregunta{i}': session.get(f'pregunta{i}') for i in range(1, 81)}
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT pregunta, respuesta FROM respuestas WHERE id_usuario = ?", (usuario_id,))
+    respuestas = dict(cursor.fetchall())  # Convertir a diccionario para fácil acceso
+    conn.close()
 
     estilos = {"Activo": 0, "Reflexivo": 0, "Teórico": 0, "Pragmático": 0}
 
@@ -329,6 +368,15 @@ def resultado():
             estilos[pregunta["estilo"]] += 1  
 
     estilo_predominante = max(estilos, key=estilos.get)
+
+    print(f"Guardando estilo '{estilo_predominante}' para usuario ID {usuario_id}")
+    
+    # Guardar el estilo de aprendizaje en la base de datos
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("UPDATE usuarios SET estilo = ? WHERE id_usuario = ?", (estilo_predominante, usuario_id))
+    conn.commit()
+    conn.close()
 
     rendimiento = CalculoDeRendimiento.obtener_rendimiento(nombre, apellido)
     promedio_rendimiento = rendimiento["promedio"]
@@ -357,6 +405,35 @@ def resultado():
                            promedio_rendimiento=promedio_rendimiento, 
                            tipo_rendimiento=tipo_rendimiento, 
                            ultima_pagina=ultima_pagina)
+
+@app.route('/recomendaciones', methods=['GET'])
+def recomendaciones():
+    # Verificar si el usuario ha iniciado sesión
+    usuario_id = session.get('usuario_id')
+    if not usuario_id:
+        return redirect(url_for('login'))  # Redirigir al login si no ha iniciado sesión
+
+    # Conectar a la base de datos y obtener el estilo de aprendizaje del usuario
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT estilo FROM usuarios WHERE id_usuario = ?", (usuario_id,))
+    resultado = cursor.fetchone()
+    conn.close()
+
+    if not resultado:
+        return "No se encontró el estilo de aprendizaje.", 404  # Mensaje de error si no hay datos
+
+    Estilos = resultado[0]  # Extraer el estilo de aprendizaje
+
+    print(f"🔍 Estilo recuperado: {Estilos}")
+    # Obtener aplicaciones recomendadas según el estilo de aprendizaje
+    recomendaciones = HerramientasEducativas.obtener_herramientas_recomendadas(Estilos)
+    conn.close()
+
+    print(f"Recomendaciones encontradas para estilo {Estilos}: {recomendaciones}")
+
+    return render_template('recomendaciones.html', recomendaciones=recomendaciones, Estilos=Estilos)
 
 @app.route("/ver_progreso")
 def ver_progreso():
@@ -408,6 +485,8 @@ def logout():
 @app.route('/ver_respuestas')
 def ver_respuestas():
     return render_template("ver_respuestas.html")
+
+verificar_base_datos()
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -13,12 +13,13 @@
         <h3>📌 Estilo de aprendizaje predominante: <strong>{{ estilo }}</strong></h3>
 
         <h3>📊 Rendimiento Académico</h3>
-        <p>Tu primedio general de tus 3 ultimos ciclos es: {{ promedio_rendimiento }}</p>
+        <p>Tu promedio general de tus 3 ultimos ciclos es: {{ promedio_rendimiento }}</p>
         <p>Tu escala de clasificación es: {{ tipo_rendimiento }}</p>
 
         <div class="botones">
             <a href="{{ url_for('dashboard') }}"><button>Volver</button></a>
             <a href="{{ url_for('encuesta',pagina=ultima_pagina)}}"><button>Volver a Realizar la Encuesta</button></a>
+            <a href="{{ url_for('recomendaciones') }}" class="button">Ver Recomendaciones</a>
         </div>
     </div>
 
